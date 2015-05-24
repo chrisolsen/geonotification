@@ -20,30 +20,32 @@ func (n *Notification) expired() bool {
 	return n.End.Unix() < time.Now().Unix()
 }
 
-func New(redisHost string, redisPort int64, repeatDelayInSeconds time.Duration) {
+func New(notifications []Notification, redisHost string, redisPort int64, repeatDelayInSeconds time.Duration) *Queue {
 	err := SetupCache(redisHost, redisPort)
 	if err != nil {
 		log.Fatal("Failed to create cache", err)
-		return
+		return nil
 	}
 
 	// register all the messengers
-	sender := notificationSender{}
-	sender.Register(GoogleCloudMessenger{})
+	sender := &notificationSender{}
+	sender.Register(GoogleCloudMessenger{"AIzaSyDpSfh-xmbiqvCa2I_-pkULpLffS4FkkEo"})
 
 	queue = &Queue{
-		notifications:     make([]Notification, 0, 100),
+		notifications:     notifications,
 		delay:             repeatDelayInSeconds,
-		sender:            &sender,
+		sender:            sender,
 		recipientProvider: &recipientProvider{}, // this also should allow for registering providers for each os type
 		ErrorChan:         make(chan error),
 		RemoveChan:        make(chan Notification),
+		SentChan:          make(chan []string),
 	}
 
-	queue.Start()
+	return queue
 }
 
 func AddNotification(n Notification) error {
+	log.Println("Adding notification", n)
 	return queue.AddItem(n)
 }
 

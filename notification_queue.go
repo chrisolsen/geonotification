@@ -1,6 +1,10 @@
 package geonotification
 
-import "time"
+import (
+	"fmt"
+	"log"
+	"time"
+)
 
 // Queue holds a list of notifications that need to be sent out
 // and every set period calls the `.Send()` method
@@ -15,6 +19,7 @@ type Queue struct {
 }
 
 func (q *Queue) Start() {
+
 	go (func() {
 		for {
 			for _, n := range q.notifications {
@@ -26,21 +31,26 @@ func (q *Queue) Start() {
 				// TODO: need to group recipients by messenger type
 				recipientIds, err := q.recipientProvider.fetch(&n)
 				if err != nil {
+					log.Println("Error fetching recipients", err)
 					q.ErrorChan <- err
 					continue
 				}
+
+				log.Printf("About to send to %v recipients...\n", len(recipientIds))
 
 				// FIXME: I don't like how an "error" object is returned that
 				// contains more errors.  Should return nil if no errors exist
 				ferr := q.sender.Send(n, recipientIds)
 				if len(ferr.Errors) > 0 {
 					for _, e := range ferr.Errors {
+						log.Println("Error sending to recipients", e)
 						q.ErrorChan <- e
 					}
+					fmt.Println("continuing...")
 					continue
 				}
 
-				q.SentChan <- recipientIds
+				//q.SentChan <- recipientIds
 				q.recipientProvider.markComplete(&n, recipientIds)
 			}
 			time.Sleep(q.delay)

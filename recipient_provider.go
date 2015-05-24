@@ -1,5 +1,10 @@
 package geonotification
 
+import (
+	"fmt"
+	"log"
+)
+
 // RecipientProvider provides the ability to fetch a list of geoCoord blocks
 // based on the notification
 //
@@ -31,6 +36,9 @@ func (r recipientProvider) fetch(n *Notification) ([]string, error) {
 
 	for _, key := range n.Keys {
 		rIds, err := c.deviceCoords.getIds(key)
+		if len(rIds) > 0 {
+			fmt.Println("IDs: ", rIds)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -57,4 +65,5 @@ func (r recipientProvider) fetch(n *Notification) ([]string, error) {
 func (r recipientProvider) markComplete(n *Notification, recipientIds []string) {
 	c := GetCache()
 	c.notifiedRecipients.add(n, recipientIds...)
+	log.Printf("Sent to %v recipients\n", len(recipientIds))
 }

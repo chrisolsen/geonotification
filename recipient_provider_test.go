@@ -16,16 +16,19 @@ func TestMarkComplete(t *testing.T) {
 	defer r.Quit()
 
 	tests := []struct {
+		name         string
 		notification *Notification
 		sendToIds    []string
 		existingIds  []string
 	}{
 		{
+			name:         "New ids",
 			notification: &Notification{Id: "99"},
 			sendToIds:    []string{"1", "2", "3"},
 			existingIds:  []string{},
 		},
 		{
+			name:         "No id overlap",
 			notification: &Notification{Id: "99"},
 			sendToIds:    []string{"1", "2", "3"},
 			existingIds:  []string{"4", "5"},
@@ -33,6 +36,7 @@ func TestMarkComplete(t *testing.T) {
 
 		// duplicate ids...just to make sure things don't blow up
 		{
+			name:         "id overlap",
 			notification: &Notification{Id: "99"},
 			sendToIds:    []string{"1", "2", "3"},
 			existingIds:  []string{"3", "4", "5"},
@@ -69,7 +73,7 @@ func TestMarkComplete(t *testing.T) {
 
 		// tests
 		if initCount+len(test.sendToIds) != finalCount {
-			t.Error("Invalid number of ids marked as complete")
+			t.Error(test.name, "Invalid number of ids marked as complete")
 			return
 		}
 	}
